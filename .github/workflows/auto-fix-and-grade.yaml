@@ -1,0 +1,38 @@
+name: Auto-fix and Grade Student Repos
+
+on:
+  schedule:
+    # Run every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      check_all:
+        description: 'Scan all repositories instead of past 24 hours'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  fix-and-grade:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run fix and grade script
+        env:
+          BOT_PAT: ${{ secrets.BOT_PAT }}
+        run: |
+          ARG=""
+          if [ "${{ github.event.inputs.check_all }}" = "true" ]; then
+            ARG="--all"
+          fi
+          python3 -u .github/scripts/fix_and_grade.py $ARG
